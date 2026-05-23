@@ -10,8 +10,10 @@ This project now includes:
 - runtime upload handling
 - media management
 - form submission handling for inquiries and careers
+- optional signed webhook notifications for inquiries and careers
 - dynamic `robots.txt` and `sitemap.xml`
-- production deployment support with Docker
+- production deployment support with Docker, Docker Compose, and Nginx
+- GitHub Actions CI for lint, tests, and builds
 
 ## Architecture
 
@@ -68,6 +70,9 @@ This project now includes:
 
 Create a local runtime env file such as `.env.local`.
 
+Node requirement:
+- Node.js 22 or newer
+
 Minimum required variables:
 
 ```bash
@@ -92,6 +97,9 @@ CAREER_RATE_LIMIT_WINDOW_MS="1800000"
 UPLOAD_RATE_LIMIT_MAX="30"
 UPLOAD_RATE_LIMIT_WINDOW_MS="3600000"
 ALLOWED_ORIGINS="https://your-domain.com"
+SUBMISSION_WEBHOOK_URL=""
+SUBMISSION_WEBHOOK_SECRET=""
+SUBMISSION_WEBHOOK_TIMEOUT_MS="5000"
 ```
 
 ## Generate an Admin Password Hash
@@ -157,8 +165,15 @@ Contact and career forms:
 Current operational behavior:
 - no email provider is required for submissions to be captured
 - the admin console is the authoritative inbox
+- optional webhook delivery can notify Slack, Zapier, Make, a CRM, or another internal endpoint
 
-If you later want email notifications, CRM sync, or webhook delivery, those can be layered on top of the current backend cleanly.
+Webhook behavior:
+- `SUBMISSION_WEBHOOK_URL` receives a signed JSON POST for contact and career submissions
+- `X-BetterHub-Event` identifies the submission type
+- `X-BetterHub-Delivery` provides a unique delivery id
+- `X-BetterHub-Signature` is included when `SUBMISSION_WEBHOOK_SECRET` is set
+
+If you later want SMTP email delivery in addition to webhooks, that can be layered on top of the current backend cleanly.
 
 ## Upload Handling
 
@@ -214,6 +229,28 @@ Important:
 - mount `data/runtime` as a persistent volume
 - do not rely on container filesystem persistence alone
 
+### Docker Compose
+
+A `docker-compose.yml` file is included for a single-host deployment:
+
+```bash
+docker compose up -d --build
+```
+
+### Reverse Proxy
+
+A starter reverse proxy example is included at:
+- `deploy/nginx.conf`
+
+You should still attach TLS with your real Nginx, Caddy, Traefik, or hosting edge configuration.
+
+### CI
+
+A GitHub Actions workflow is included at:
+- `.github/workflows/ci.yml`
+
+It runs `npm run check` on pushes to `main` and on pull requests.
+
 ## SEO and Crawlability
 
 The site now includes:
@@ -246,3 +283,4 @@ Before launch, confirm:
 - This project is now suitable for staging and controlled production deployment on a persistent Node host.
 - It is not a serverless-static-only architecture because content, submissions, and sessions are runtime-backed.
 - SQLite is appropriate here for a single-instance company site/admin system. If you later move to multi-admin, high-traffic, or horizontally scaled hosting, the next step would be PostgreSQL plus object storage.
+# Betterhub-intelligence-website
