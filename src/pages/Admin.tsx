@@ -60,6 +60,7 @@ type AdminTab =
 
 export default function Admin() {
   const { refreshContent } = useSiteContent();
+  const adminLoadRequestRef = useRef(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminContent, setAdminContent] = useState<SiteContent | null>(null);
   const [submissions, setSubmissions] = useState<SiteSubmissions>({ contacts: [], careers: [] });
@@ -79,7 +80,7 @@ export default function Admin() {
   });
 
   useEffect(() => {
-    void loadAdminData();
+    void restoreAdminSession();
   }, []);
 
   const blogPosts = adminContent?.blogPosts || [];
@@ -170,14 +171,20 @@ export default function Admin() {
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
+    setNotice('');
     setIsLoading(true);
 
     try {
       await loginAdmin(loginState.email, loginState.password);
       setIsAuthenticated(true);
       setLoginState((current) => ({ ...current, password: '' }));
-      await loadAdminData();
-      setNotice('Admin access granted.');
+      setActiveTab('dashboard');
+      const portalReady = await loadAdminData('login');
+      setNotice(
+        portalReady
+          ? 'Admin access granted.'
+          : 'Admin access granted. Some management data still needs to be reloaded.',
+      );
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : 'Could not sign in.');
       setIsAuthenticated(false);
@@ -420,10 +427,21 @@ export default function Admin() {
           {error && <p className="mb-4 text-sm text-rose-300">{error}</p>}
           {notice && <p className="mb-4 text-sm text-emerald-300">{notice}</p>}
 
-          {isLoading || !adminContent ? (
+          {isLoading ? (
             <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8 text-sm text-slate-300">
               Loading management data...
             </div>
+          ) : !adminContent ? (
+            <AdminCard title="Management data unavailable">
+              <EmptyEditorState
+                title="The admin session is active, but the dashboard data did not load."
+                description="Use retry to fetch the latest content and submissions again. If this keeps happening, restart the local API server so the updated admin account and session settings are applied."
+                actionLabel="Retry loading"
+                onAction={() => {
+                  void loadAdminData('refresh');
+                }}
+              />
+            </AdminCard>
           ) : (
             <>
               {activeTab === 'dashboard' && (
@@ -1004,21 +1022,18 @@ export default function Admin() {
     </div>
   );
 
-  async function loadAdminData() {
+  async function restoreAdminSession() {
+    const requestId = ++adminLoadRequestRef.current;
     setIsLoading(true);
     setError('');
 
     try {
-      const [_session, content, nextSubmissions] = await Promise.all([
-        getAdminSession(),
-        getAdminContent(),
-        getAdminSubmissions(),
-      ]);
-
-      setIsAuthenticated(true);
-      setAdminContent(content);
-      setSubmissions(nextSubmissions);
+      await getAdminSession();
     } catch (loadError) {
+      if (requestId !== adminLoadRequestRef.current) {
+        return;
+      }
+
       setIsAuthenticated(false);
       setAdminContent(null);
       setSubmissions({ contacts: [], careers: [] });
@@ -1027,9 +1042,82 @@ export default function Admin() {
       } else {
         setError(loadError instanceof Error ? loadError.message : 'Could not load admin data.');
       }
-    } finally {
       setIsLoading(false);
+      return;
     }
+
+    if (requestId !== adminLoadRequestRef.current) {
+      return;
+    }
+
+    setIsAuthenticated(true);
+    await loadAdminData('restore', requestId);
+  }
+
+  async function loadAdminData(
+    mode: 'restore' | 'login' | 'refresh' = 'refresh',
+    requestId = ++adminLoadRequestRef.current,
+  ) {
+    setIsLoading(true);
+    if (mode !== 'login') {
+      setError('');
+    }
+
+    const [contentResult, submissionsResult] = await Promise.allSettled([
+      getAdminContent(),
+      getAdminSubmissions(),
+    ]);
+
+    if (requestId !== adminLoadRequestRef.current) {
+      return false;
+    }
+
+    let nextError = '';
+
+    if (contentResult.status === 'fulfilled') {
+      setAdminContent(contentResult.value);
+    } else {
+      const contentError =
+        contentResult.reason instanceof Error
+          ? contentResult.reason.message
+          : 'Could not load admin content.';
+
+      if (contentError === 'Unauthorized.') {
+        setIsAuthenticated(false);
+        setAdminContent(null);
+        setSubmissions({ contacts: [], careers: [] });
+        setIsLoading(false);
+        return false;
+      }
+
+      setAdminContent(null);
+      nextError = contentError;
+    }
+
+    if (submissionsResult.status === 'fulfilled') {
+      setSubmissions(submissionsResult.value);
+    } else {
+      const submissionsError =
+        submissionsResult.reason instanceof Error
+          ? submissionsResult.reason.message
+          : 'Could not load submission inbox.';
+
+      if (submissionsError === 'Unauthorized.') {
+        setIsAuthenticated(false);
+        setAdminContent(null);
+        setSubmissions({ contacts: [], careers: [] });
+        setIsLoading(false);
+        return false;
+      }
+
+      setSubmissions({ contacts: [], careers: [] });
+      nextError = nextError ? `${nextError} ${submissionsError}` : submissionsError;
+    }
+
+    setIsAuthenticated(true);
+    setError(nextError);
+    setIsLoading(false);
+    return contentResult.status === 'fulfilled';
   }
 
   function updateBlog(id: string, updater: (post: BlogPost) => BlogPost) {

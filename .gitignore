@@ -8,3 +8,4 @@ coverage/
 !.env.example
 data/runtime/
 tmp-*.png
+.env.local

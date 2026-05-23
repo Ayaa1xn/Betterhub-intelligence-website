@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    container_name: betterhub-intelligence
+    restart: unless-stopped
+    env_file:
+      - .env.local
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./data/runtime:/app/data/runtime
