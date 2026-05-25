@@ -293,7 +293,7 @@ If you deploy this repository through Hostinger's managed Node.js flow:
 - use Node.js `22.x`
 - use build command: `npm run build`
 - use start command: `npm start`
-- if Hostinger asks for an entry file, use `dist-server/index.js`
+- if Hostinger asks for an entry file, `server.js` is safe and supported
 - if Hostinger asks for an output directory for the frontend assets, use `dist`
 
 Required environment variables in hPanel:

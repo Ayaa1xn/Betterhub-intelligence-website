@@ -14,7 +14,7 @@
     "build:server": "node scripts/build-server.js",
     "build": "npm run build:web && npm run build:server",
     "preview": "vite preview --host 127.0.0.1",
-    "start": "node dist-server/index.js",
+    "start": "node server.js",
     "clean": "rm -rf dist dist-server",
     "lint": "tsc --noEmit",
     "test": "node --import tsx --test src/lib/router.test.ts src/lib/richText.test.ts src/lib/assistantKnowledge.test.ts server/security.test.ts server/public-content.test.ts",
