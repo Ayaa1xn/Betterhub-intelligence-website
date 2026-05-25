@@ -12,7 +12,7 @@
     "api": "node --import tsx server/index.ts",
     "build:web": "vite build",
     "build:server": "node scripts/build-server.js",
-    "build": "npm run build:web && npm run build:server",
+    "build": "npm run build && npm run build",
     "preview": "vite preview --host 127.0.0.1",
     "start": "node server.js",
     "clean": "rm -rf dist dist-server",
