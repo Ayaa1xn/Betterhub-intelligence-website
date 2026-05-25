@@ -16,7 +16,6 @@ import {
   ShoppingBag,
   Sparkles,
   Sun,
-  UserRound,
   X,
   Zap,
 } from 'lucide-react';
@@ -313,16 +312,6 @@ export default function Header({
               aria-label="Toggle light and dark theme"
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleLinkClick('/admin')}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-700 dark:hover:bg-slate-800 dark:hover:text-blue-300"
-              aria-label="Open admin portal"
-              title="Admin"
-            >
-              <UserRound className="h-4.5 w-4.5" />
             </button>
 
             <button
