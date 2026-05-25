@@ -17,12 +17,8 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY --from=build /app/dist ./dist
-COPY --from=build /app/server ./server
-COPY --from=build /app/src ./src
+COPY --from=build /app/dist-server ./dist-server
 COPY --from=build /app/data ./data
-COPY --from=build /app/scripts ./scripts
-COPY --from=build /app/index.html ./index.html
-COPY --from=build /app/tsconfig.json ./tsconfig.json
 
 RUN mkdir -p /app/data/runtime/uploads
 

@@ -43,6 +43,7 @@ export const config = {
   port: readNumber(process.env.PORT || process.env.API_PORT, 3001),
   nodeEnv: process.env.NODE_ENV || 'development',
   publicSiteUrl: trimTrailingSlash(process.env.PUBLIC_SITE_URL || ''),
+  devPublicUrl: trimTrailingSlash(process.env.DEV_PUBLIC_URL || ''),
   adminEmail: (process.env.ADMIN_EMAIL || '').trim().toLowerCase(),
   adminPasswordHash: (process.env.ADMIN_PASSWORD_HASH || '').trim(),
   adminPassword: process.env.ADMIN_PASSWORD || '',
@@ -100,7 +101,24 @@ export function getAllowedOrigins() {
     origins.add('http://localhost:3000');
     origins.add('http://127.0.0.1:3001');
     origins.add('http://localhost:3001');
+
+    const devOrigin = toOrigin(config.devPublicUrl);
+    if (devOrigin) {
+      origins.add(devOrigin);
+    }
   }
 
   return origins;
+}
+
+function toOrigin(value: string) {
+  if (!value) {
+    return '';
+  }
+
+  try {
+    return new URL(value).origin;
+  } catch {
+    return '';
+  }
 }

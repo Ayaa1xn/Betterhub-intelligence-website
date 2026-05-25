@@ -130,6 +130,41 @@ Local URLs:
 - frontend: `http://127.0.0.1:3000`
 - API: `http://127.0.0.1:3001`
 
+### Share a Local Build via ngrok or Another Tunnel
+
+When you want to share your local dev site with someone else through ngrok, Cloudflare Tunnel, or a similar public URL, add the tunnel URL to `.env.local` and restart the dev server:
+
+```bash
+DEV_PUBLIC_URL="https://your-tunnel-host.example"
+```
+
+If your tunnel requires an additional explicit host allowlist entry, you can also set:
+
+```bash
+DEV_ALLOWED_HOSTS="your-tunnel-host.example"
+```
+
+This keeps both layers aligned:
+- Vite will allow the public host instead of blocking it
+- the backend will accept that origin for admin login, contact forms, and career submissions
+
+For ngrok specifically, the usual flow is:
+1. start `npm run dev`
+2. start `ngrok http 3000`
+3. copy the HTTPS URL ngrok gives you
+4. place that URL into `DEV_PUBLIC_URL` in `.env.local`
+5. restart `npm run dev`
+
+If you are sharing the production-style local server instead:
+
+```bash
+npm run build
+npm start
+ngrok http 3001
+```
+
+Then common dev tunnel domains such as ngrok are accepted automatically by the backend in non-production mode, so admin login and form submissions do not need an extra origin override just for that preview flow.
+
 ## Commands
 
 - `npm run dev` starts Vite and the API together
@@ -250,6 +285,31 @@ A GitHub Actions workflow is included at:
 - `.github/workflows/ci.yml`
 
 It runs `npm run check` on pushes to `main` and on pull requests.
+
+## Hostinger Managed Node.js Notes
+
+If you deploy this repository through Hostinger's managed Node.js flow:
+
+- use Node.js `22.x`
+- use build command: `npm run build`
+- use start command: `npm start`
+- if Hostinger asks for an entry file, use `dist-server/index.js`
+- if Hostinger asks for an output directory for the frontend assets, use `dist`
+
+Required environment variables in hPanel:
+
+```bash
+PUBLIC_SITE_URL="https://your-live-domain.com"
+ADMIN_EMAIL="techteam@bhi"
+ADMIN_PASSWORD_HASH="paste-the-generated-hash"
+ADMIN_SESSION_SECRET="generate-a-long-random-secret"
+ALLOWED_ORIGINS="https://your-live-domain.com"
+```
+
+Notes:
+- Hostinger will not read `.env.example` automatically. You must add real values in the deployment environment.
+- `PORT` is typically injected by the platform, so you usually do not need to set `API_PORT` manually there.
+- This app writes runtime content, sessions, submissions, and uploads. If your hosting workflow replaces the app directory during redeploys, move runtime data to a persistent writable path before relying on admin-managed content long term.
 
 ## SEO and Crawlability
 

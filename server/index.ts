@@ -334,7 +334,7 @@ function requireTrustedOrigin(
   _res: express.Response,
   next: express.NextFunction,
 ) {
-  if (!isTrustedOrigin(req.headers.origin, allowedOrigins)) {
+  if (!isTrustedOrigin(req.headers.origin, allowedOrigins) && !isTrustedTunnelOrigin(req.headers.origin)) {
     return next(forbidden('Origin not allowed.'));
   }
 
@@ -406,6 +406,25 @@ function escapeXml(value: string) {
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+function isTrustedTunnelOrigin(originHeader: string | undefined) {
+  if (config.nodeEnv === 'production' || !originHeader) {
+    return false;
+  }
+
+  try {
+    const hostname = new URL(originHeader).hostname.toLowerCase();
+    return (
+      hostname.endsWith('.ngrok-free.app') ||
+      hostname.endsWith('.ngrok.app') ||
+      hostname.endsWith('.loca.lt') ||
+      hostname.endsWith('.trycloudflare.com') ||
+      hostname.endsWith('.localhost.run')
+    );
+  } catch {
+    return false;
+  }
 }
 
 declare global {
