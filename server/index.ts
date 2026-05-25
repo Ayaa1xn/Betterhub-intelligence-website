@@ -1,21 +1,6 @@
 import express from 'express';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import {
-  addCareerSubmission,
-  addContactSubmission,
-  clearExpiredAdminSessions,
-  createAdminSession,
-  deleteAdminSession,
-  getAdminSession,
-  getAdminSiteContent,
-  getPublicSiteContent,
-  getSubmissions,
-  initializeStore,
-  saveSiteContent,
-  saveUpload,
-  verifyAdminCredentials,
-} from './store';
 import { assertServerConfig, config, getAllowedOrigins } from './env';
 import { asyncHandler, badRequest, forbidden, HttpError, tooManyRequests, unauthorized } from './errors';
 import {
@@ -34,6 +19,7 @@ const app = express();
 const allowedOrigins = getAllowedOrigins();
 const secureCookies = config.nodeEnv === 'production';
 const distDir = config.distDir;
+let storeModule: Awaited<typeof import('./store')> | null = null;
 
 process.on('unhandledRejection', (error) => {
   console.error('Unhandled promise rejection during BetterHub runtime:', error);
@@ -95,7 +81,7 @@ app.use('/uploads', express.static(config.seedUploadsDir, { maxAge: '30d', fallt
 app.get(
   '/api/health',
   asyncHandler(async (_req, res) => {
-    clearExpiredAdminSessions();
+    getStoreModule().clearExpiredAdminSessions();
     res.setHeader('Cache-Control', 'no-store');
     res.json({
       ok: true,
@@ -116,7 +102,7 @@ app.get(
 app.get(
   '/sitemap.xml',
   asyncHandler(async (req, res) => {
-    const content = await getPublicSiteContent();
+    const content = await getStoreModule().getPublicSiteContent();
     const baseUrl = getBaseUrl(req);
     res.type('application/xml').send(buildSitemapXml(baseUrl, content));
   }),
@@ -125,7 +111,7 @@ app.get(
 app.get(
   '/api/content',
   asyncHandler(async (_req, res) => {
-    const content = await getPublicSiteContent();
+    const content = await getStoreModule().getPublicSiteContent();
     res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
     res.json(content);
   }),
@@ -145,7 +131,7 @@ app.post(
       createdAt: new Date().toISOString(),
     };
 
-    await addContactSubmission(submission, getClientIp(req));
+    await getStoreModule().addContactSubmission(submission, getClientIp(req));
     void notifySubmission('contact', submission);
     res.status(201).json({ ok: true });
   }),
@@ -165,7 +151,7 @@ app.post(
       createdAt: new Date().toISOString(),
     };
 
-    await addCareerSubmission(submission, getClientIp(req));
+    await getStoreModule().addCareerSubmission(submission, getClientIp(req));
     void notifySubmission('career', submission);
     res.status(201).json({ ok: true });
   }),
@@ -184,12 +170,12 @@ app.post(
       throw badRequest('Email and password are required.');
     }
 
-    const admin = await verifyAdminCredentials(email, password);
+    const admin = await getStoreModule().verifyAdminCredentials(email, password);
     if (!admin) {
       throw unauthorized('Invalid credentials.');
     }
 
-    const session = await createAdminSession(admin.email, {
+    const session = await getStoreModule().createAdminSession(admin.email, {
       userAgent: req.headers['user-agent'] || 'unknown',
       ipAddress: getClientIp(req),
     });
@@ -224,7 +210,7 @@ app.get(
   requireAuth,
   asyncHandler(async (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-    res.json(await getAdminSiteContent());
+    res.json(await getStoreModule().getAdminSiteContent());
   }),
 );
 
@@ -235,7 +221,7 @@ app.put(
   express.json({ limit: '8mb' }),
   asyncHandler(async (req, res) => {
     const content = validateSiteContentPayload(req.body?.content);
-    const saved = await saveSiteContent(content);
+    const saved = await getStoreModule().saveSiteContent(content);
     res.setHeader('Cache-Control', 'no-store');
     res.json(saved);
   }),
@@ -246,7 +232,7 @@ app.get(
   requireAuth,
   asyncHandler(async (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-    res.json(await getSubmissions());
+    res.json(await getStoreModule().getSubmissions());
   }),
 );
 
@@ -263,7 +249,7 @@ app.post(
       throw badRequest('fileName and dataUrl are required.');
     }
 
-    const upload = await saveUpload(fileName, dataUrl);
+    const upload = await getStoreModule().saveUpload(fileName, dataUrl);
     res.status(201).json(upload);
   }),
 );
@@ -274,7 +260,7 @@ app.post(
   requireTrustedOrigin,
   asyncHandler(async (req, res) => {
     if (req.authToken) {
-      await deleteAdminSession(req.authToken);
+      await getStoreModule().deleteAdminSession(req.authToken);
     }
 
     res.setHeader('Set-Cookie', clearSessionCookie(secureCookies));
@@ -330,7 +316,11 @@ console.info('Starting BetterHub server with runtime configuration:', {
 });
 
 assertServerConfig();
-initializeStore()
+loadStoreModule()
+  .then((store) => {
+    storeModule = store;
+    return store.initializeStore();
+  })
   .then(() => {
     console.info('BetterHub data store initialized successfully.');
     const server = app.listen(config.port, config.host, () => {
@@ -384,7 +374,7 @@ async function requireAuth(
     return next(unauthorized());
   }
 
-  const session = await getAdminSession(token);
+  const session = await getStoreModule().getAdminSession(token);
   if (!session) {
     res.setHeader('Set-Cookie', clearSessionCookie(secureCookies));
     return next(unauthorized());
@@ -454,6 +444,23 @@ function isTrustedTunnelOrigin(originHeader: string | undefined) {
     );
   } catch {
     return false;
+  }
+}
+
+function getStoreModule() {
+  if (!storeModule) {
+    throw new Error('BetterHub store module is not available yet.');
+  }
+
+  return storeModule;
+}
+
+async function loadStoreModule() {
+  try {
+    return await import('./store');
+  } catch (error) {
+    console.error('BetterHub failed to load the store module during startup:', error);
+    throw error;
   }
 }
 
