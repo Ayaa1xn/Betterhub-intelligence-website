@@ -35,6 +35,14 @@ const allowedOrigins = getAllowedOrigins();
 const secureCookies = config.nodeEnv === 'production';
 const distDir = config.distDir;
 
+process.on('unhandledRejection', (error) => {
+  console.error('Unhandled promise rejection during BetterHub runtime:', error);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception during BetterHub runtime:', error);
+});
+
 app.disable('x-powered-by');
 app.set('trust proxy', true);
 
@@ -310,12 +318,34 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
   });
 });
 
-assertServerConfig();
-initializeStore().then(() => {
-  app.listen(config.port, config.host, () => {
-    console.log(`BetterHub API listening on http://${config.host}:${config.port}`);
-  });
+console.info('Starting BetterHub server with runtime configuration:', {
+  node: process.version,
+  env: config.nodeEnv,
+  host: config.host,
+  port: config.port,
+  rootDir: config.rootDir,
+  distDir: config.distDir,
+  dataDir: config.dataDir,
+  distExists: existsSync(distDir),
 });
+
+assertServerConfig();
+initializeStore()
+  .then(() => {
+    console.info('BetterHub data store initialized successfully.');
+    const server = app.listen(config.port, config.host, () => {
+      console.log(`BetterHub API listening on http://${config.host}:${config.port}`);
+    });
+
+    server.on('error', (error) => {
+      console.error('BetterHub server failed to bind to the configured host/port:', error);
+      process.exit(1);
+    });
+  })
+  .catch((error) => {
+    console.error('BetterHub failed during startup initialization:', error);
+    process.exit(1);
+  });
 
 function rateLimit(scope: string, maxRequests: number, windowMs: number): express.RequestHandler {
   return (req, res, next) => {

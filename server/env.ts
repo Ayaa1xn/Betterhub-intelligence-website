@@ -1,7 +1,9 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const rootDir = process.cwd();
+const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = process.env.APP_ROOT_DIR || path.resolve(moduleDir, '..');
 
 for (const fileName of ['.env.local', '.env']) {
   const targetPath = path.join(rootDir, fileName);
