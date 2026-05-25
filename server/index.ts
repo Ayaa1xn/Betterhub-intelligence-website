@@ -459,8 +459,9 @@ async function loadStoreModule() {
   try {
     return await import('./store');
   } catch (error) {
-    console.error('BetterHub failed to load the store module during startup:', error);
-    throw error;
+    console.error('BetterHub failed to load the SQLite-backed store module during startup:', error);
+    console.warn('BetterHub is falling back to the filesystem-backed store for runtime compatibility.');
+    return import('./store-fs');
   }
 }
 
