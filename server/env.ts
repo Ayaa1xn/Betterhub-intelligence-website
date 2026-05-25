@@ -4,8 +4,14 @@ import { fileURLToPath } from 'node:url';
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = process.env.APP_ROOT_DIR || path.resolve(moduleDir, '..');
+const nodeEnv = process.env.NODE_ENV || 'production';
 
-for (const fileName of ['.env.local', '.env']) {
+const envFiles = ['.env'];
+if (nodeEnv !== 'production') {
+  envFiles.unshift('.env.local');
+}
+
+for (const fileName of envFiles) {
   const targetPath = path.join(rootDir, fileName);
   if (existsSync(targetPath)) {
     process.loadEnvFile(targetPath);
@@ -41,12 +47,9 @@ export const config = {
   legacyContentFile: path.join(rootDir, 'data', 'site-content.json'),
   legacySubmissionsFile: path.join(rootDir, 'data', 'submissions.json'),
   distDir: path.join(rootDir, 'dist'),
-  nodeEnv: process.env.NODE_ENV || 'development',
+  nodeEnv,
   host: process.env.API_HOST || '0.0.0.0',
-  port: readNumber(
-    process.env.PORT || process.env.API_PORT,
-    (process.env.NODE_ENV || 'development') === 'production' ? 3000 : 3001,
-  ),
+  port: readNumber(process.env.PORT || process.env.API_PORT, 3000),
   publicSiteUrl: trimTrailingSlash(process.env.PUBLIC_SITE_URL || ''),
   devPublicUrl: trimTrailingSlash(process.env.DEV_PUBLIC_URL || ''),
   adminEmail: (process.env.ADMIN_EMAIL || '').trim().toLowerCase(),

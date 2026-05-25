@@ -6,6 +6,7 @@ const children = [
     stdio: 'inherit',
     env: {
       ...process.env,
+      NODE_ENV: process.env.NODE_ENV || 'development',
       API_PORT: process.env.API_PORT || '3001',
       API_HOST: process.env.API_HOST || '127.0.0.1',
     },

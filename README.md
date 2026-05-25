@@ -68,7 +68,8 @@ This project now includes:
 
 ## Required Environment Variables
 
-Create a local runtime env file such as `.env.local`.
+Create a runtime env file such as `.env` for production deployments.
+For local development, `npm run dev` explicitly sets development mode and can still use `.env.local`.
 
 Node requirement:
 - Node.js 22 or newer
@@ -76,8 +77,9 @@ Node requirement:
 Minimum required variables:
 
 ```bash
-API_PORT="3001"
-API_HOST="127.0.0.1"
+NODE_ENV="production"
+PORT="3000"
+API_HOST="0.0.0.0"
 PUBLIC_SITE_URL="https://your-domain.com"
 ADMIN_EMAIL="admin@example.com"
 ADMIN_PASSWORD_HASH="paste-generated-hash-here"
@@ -257,7 +259,7 @@ A production Dockerfile is included:
 
 ```bash
 docker build -t betterhub-intelligence .
-docker run -p 3001:3001 --env-file .env.local -v $(pwd)/data/runtime:/app/data/runtime betterhub-intelligence
+docker run -p 3000:3000 --env-file .env -v $(pwd)/data/runtime:/app/data/runtime betterhub-intelligence
 ```
 
 Important:
@@ -299,6 +301,10 @@ If you deploy this repository through Hostinger's managed Node.js flow:
 Required environment variables in hPanel:
 
 ```bash
+NODE_ENV="production"
+PORT="3000"
+API_PORT="3000"
+API_HOST="0.0.0.0"
 PUBLIC_SITE_URL="https://your-live-domain.com"
 ADMIN_EMAIL="techteam@bhi"
 ADMIN_PASSWORD_HASH="paste-the-generated-hash"
@@ -308,7 +314,7 @@ ALLOWED_ORIGINS="https://your-live-domain.com"
 
 Notes:
 - Hostinger will not read `.env.example` automatically. You must add real values in the deployment environment.
-- `PORT` is typically injected by the platform, so you usually do not need to set `API_PORT` manually there.
+- BetterHub now defaults to production-safe startup behavior and falls back to port `3000` when no port is provided.
 - This app writes runtime content, sessions, submissions, and uploads. If your hosting workflow replaces the app directory during redeploys, move runtime data to a persistent writable path before relying on admin-managed content long term.
 
 ## SEO and Crawlability
