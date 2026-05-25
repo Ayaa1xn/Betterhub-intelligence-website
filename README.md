@@ -109,7 +109,3 @@ Container and reverse-proxy support are included in the repository for teams dep
 ## CI
 
 GitHub Actions is configured to run the verification pipeline on pushes to `main` and on pull requests.
-
-## Notes
-
-Operational secrets, production credentials, and environment-specific deployment details should remain outside the repository and outside public-facing documentation.
