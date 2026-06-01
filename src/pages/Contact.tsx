@@ -163,8 +163,7 @@ export default function Contact() {
                   Message received
                 </h3>
                 <p className="mx-auto max-w-md text-sm leading-7 text-slate-500 dark:text-slate-400">
-                  Thanks, {formData.name}. Your inquiry has been saved successfully and is ready for
-                  team follow-up inside the management dashboard.
+                  Thanks, {formData.name}. Your inquiry has been saved successfully. we will get back to you. 
                 </p>
                 <button
                   type="button"
@@ -206,14 +205,6 @@ export default function Contact() {
                   {siteSettings.officeHours}
                 </p>
               </div>
-            </div>
-
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Why this matters</h3>
-              <p className="mt-3 text-sm leading-7 text-slate-500 dark:text-slate-400">
-                A better contact flow is not just visual polish. It means fewer lost leads, better
-                follow-up visibility, and a management process your team can actually operate.
-              </p>
             </div>
           </div>
         </div>

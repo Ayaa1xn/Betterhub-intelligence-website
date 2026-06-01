@@ -38,37 +38,35 @@ export default function ServiceDetail({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
-      <div className="relative overflow-hidden border-b border-slate-200 bg-white py-20 transition-colors dark:border-slate-800 dark:bg-slate-900">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.08)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative overflow-hidden border-b border-slate-200 bg-slate-950 transition-colors dark:border-slate-800">
+        <SmartMedia
+          image={service.image}
+          poster={service.poster}
+          alt={service.alt || service.title}
+          className="absolute inset-0"
+          loading="eager"
+          mediaClassName="absolute inset-0 h-full w-full object-cover object-center"
+        />
+        <div className="relative mx-auto flex min-h-[100svh] max-w-[120rem] flex-col px-4 pb-10 pt-28 sm:px-6 sm:pb-12 sm:pt-32 lg:px-10 lg:pb-14 lg:pt-36">
           <button
             type="button"
             onClick={() => onNavigate('/services')}
-            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300"
+            className="inline-flex w-fit items-center gap-2 rounded-full border border-white/35 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white backdrop-blur-sm transition hover:bg-white/16"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to services
           </button>
-          <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[1.25fr_0.95fr] lg:items-end">
+          <div className="mt-auto max-w-4xl rounded-[2rem] border border-white/20 bg-slate-950/28 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.32)] backdrop-blur-[2px] sm:p-8">
             <div>
-              <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white md:text-5xl">
+              <h1 className="text-4xl font-black tracking-tight text-white md:text-6xl">
                 {service.title}
               </h1>
-              <p className="mt-4 max-w-3xl text-sm leading-8 text-slate-600 dark:text-slate-300 md:text-base">
+              <p className="mt-4 max-w-3xl text-base font-semibold italic leading-8 text-sky-200 md:text-lg">
+                {service.tagline}
+              </p>
+              <p className="mt-4 max-w-3xl text-sm leading-8 text-slate-100 md:text-base">
                 {service.subtitle}
               </p>
-            </div>
-            <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-50 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-              <SmartMedia
-                image={service.image}
-                video={service.video}
-                poster={service.poster}
-                alt={service.alt || service.title}
-                className="w-full h-full"
-                loading="eager"
-                mediaClassName="h-full w-full object-cover"
-                showVideoBadge
-              />
             </div>
           </div>
         </div>

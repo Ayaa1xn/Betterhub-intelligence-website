@@ -51,11 +51,6 @@ export default function Products({ onNavigate }: ProductsProps) {
                   mediaClassName="h-full w-full object-cover object-center"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 to-transparent" />
-                <div className="absolute bottom-4 left-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">
-                    {product.category}
-                  </p>
-                </div>
               </div>
 
               <div className="p-6 sm:p-8">

@@ -36,9 +36,11 @@ export default function Header({
   theme,
   setTheme,
 }: HeaderProps) {
+  const headerRef = useRef<HTMLElement | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuMaxHeight, setMobileMenuMaxHeight] = useState('calc(100svh - 5rem)');
   const dropdownCloseTimeout = useRef<number | null>(null);
 
   const openDropdown = (dropdownId: string) => {
@@ -73,6 +75,46 @@ export default function Header({
       }
     };
   }, []);
+
+  useEffect(() => {
+    const updateMobileMenuMaxHeight = () => {
+      if (!headerRef.current) {
+        return;
+      }
+
+      const nextHeight = headerRef.current.getBoundingClientRect().height;
+      setMobileMenuMaxHeight(`calc(100svh - ${nextHeight}px)`);
+    };
+
+    updateMobileMenuMaxHeight();
+    window.addEventListener('resize', updateMobileMenuMaxHeight);
+
+    const resizeObserver = new ResizeObserver(updateMobileMenuMaxHeight);
+    if (headerRef.current) {
+      resizeObserver.observe(headerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateMobileMenuMaxHeight);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) {
+      return;
+    }
+
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.overflow = originalBodyOverflow;
+    };
+  }, [isMobileMenuOpen]);
 
   const navItems = useMemo(
     () => [
@@ -202,6 +244,7 @@ export default function Header({
   return (
     <div className="fixed left-0 top-0 z-50 w-full">
       <header
+        ref={headerRef}
         className={`border-b border-slate-200/70 bg-white/95 backdrop-blur transition-all duration-300 dark:border-slate-800 dark:bg-slate-950/90 ${
           scrolled ? 'py-2 shadow-lg shadow-slate-900/5' : 'py-3'
         }`}
@@ -328,7 +371,10 @@ export default function Header({
 
       {isMobileMenuOpen && (
         <div className="border-b border-slate-200 bg-white px-4 py-5 shadow-xl dark:border-slate-800 dark:bg-slate-950 lg:hidden">
-          <div className="mx-auto max-w-[96rem] space-y-5 sm:px-4">
+          <div
+            className="mx-auto max-w-[96rem] space-y-5 overflow-y-auto overscroll-contain pb-4 pr-1 sm:px-4"
+            style={{ maxHeight: mobileMenuMaxHeight }}
+          >
             {navItems.map((item) => (
               <div key={item.label} className="border-b border-slate-100 pb-4 dark:border-slate-800">
                 <button

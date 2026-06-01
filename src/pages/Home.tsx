@@ -162,10 +162,7 @@ export default function Home({ onNavigate, onOpenConsultation }: HomeProps) {
                 </div>
                 <div className="flex flex-1 flex-col justify-between">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300">
-                      {product.category}
-                    </p>
-                    <h3 className="mt-2 text-lg font-bold text-slate-900 transition group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-300">
+                    <h3 className="text-lg font-bold text-slate-900 transition group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-300">
                       {product.title}
                     </h3>
                     <p className="mt-2 text-[12px] leading-6 text-slate-500 dark:text-slate-400">

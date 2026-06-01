@@ -634,7 +634,7 @@ export const SITE_SETTINGS: SiteSettings = {
     "Near Abu Hail Metro Station",
     "Hor Al Anz, Deira Dubai, UAE"
   ],
-  officeHours: "Saturday - Thursday: 09:00 - 18:00 (UTC+4)"
+  officeHours: "Monday - Saturday: 09:00 - 18:00 (UTC+4)"
 };
 
 export const PAGE_MEDIA: SitePageMedia = {
